@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 13th Door - Audio Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --bg-color: #050505;
+            --text-color: #e5e5e5;
+            --font-main: 'Cinzel', serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            transition: background-color 1.5s ease, color 1.5s ease;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Dynamic Visual Themes */
+        .theme-default { --bg-color: #050505; --text-color: #d1d5db; --font-main: 'Cinzel', serif; }
+        .theme-myth { --bg-color: #1a140d; --text-color: #eab308; text-shadow: 0 0 15px rgba(234, 179, 8, 0.3); }
+        .theme-underworld { --bg-color: #000000; --text-color: #7f1d1d; font-weight: bold; }
+        .theme-digital { 
+            --bg-color: #0f172a; 
+            --text-color: #22d3ee; 
+            --font-main: 'Space Mono', monospace; 
+        }
+        .theme-awake { --bg-color: #f8fafc; --text-color: #020617; text-shadow: 0 0 20px rgba(255,255,255,0.8); }
+
+        /* Animations */
+        @keyframes glitch-anim {
+            0% { transform: translate(0) }
+            20% { transform: translate(-3px, 3px) }
+            40% { transform: translate(-3px, -3px) }
+            60% { transform: translate(3px, 3px) }
+            80% { transform: translate(3px, -3px) }
+            100% { transform: translate(0) }
+        }
+        .glitch-effect { animation: glitch-anim 0.15s infinite; color: #ef4444; text-shadow: 2px 0 blue, -2px 0 red; }
+        
+        @keyframes shake-anim {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-1deg); }
+            75% { transform: translateX(5px) rotate(1deg); }
+        }
+        .screen-shake { animation: shake-anim 0.2s ease-in-out; }
+
+        @keyframes pulse-glow {
+            0%, 100% { text-shadow: 0 0 10px currentColor; }
+            50% { text-shadow: 0 0 30px currentColor, 0 0 50px currentColor; }
+        }
+        .glow-effect { animation: pulse-glow 3s infinite; }
+
+        /* UI Overlays */
+        #controls-overlay {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(0,0,0,0));
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            transition: opacity 0.5s;
+        }
+        .playing #controls-overlay {
+            opacity: 0.1;
+        }
+        .playing #controls-overlay:hover {
+            opacity: 1;
+        }
+
+        #text-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .sentence { transition: all 0.5s ease; width: 100%; max-width: 800px; }
+        .sentence-prev { font-size: 1.2rem; opacity: 0.2; transform: translateY(-20px); margin-bottom: 1rem; }
+        .sentence-current { font-size: 2.5rem; opacity: 1; transform: translateY(0); line-height: 1.4; }
+        .sentence-next { font-size: 1.2rem; opacity: 0.2; transform: translateY(20px); margin-top: 1rem; }
+
+        #lore-overlay {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #22d3ee;
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.2);
+            font-family: 'Space Mono', monospace;
+            z-index: 100;
+        }
+
+        #void-overlay {
+            background: rgba(10, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #ef4444;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+            font-family: 'Space Mono', monospace;
+            z-index: 100;
+        }
+
+        .ai-loading {
+            animation: pulse-glow 1.5s infinite;
+        }
+
+        /* Forking Path Doors */
+        .door-option {
+            width: 280px;
+            height: 380px;
+            border: 1px solid #334155;
+            background: linear-gradient(to bottom, rgba(15,23,42,0.9), rgba(0,0,0,0.9));
+            transition: all 0.4s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .door-option:hover {
+            border-color: #ef4444;
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
+            transform: translateY(-5px);
+        }
+        .door-title { font-family: 'Cinzel', serif; font-size: 1.5rem; color: #ef4444; margin-bottom: 1rem; z-index: 2; pointer-events: none; text-transform: uppercase;}
+        .door-preview { font-family: 'Space Mono', monospace; font-size: 0.9rem; color: #94a3b8; z-index: 2; pointer-events: none; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.6;}
+        .door-glow { position: absolute; inset: 0; background: radial-gradient(circle at 50% 100%, rgba(239,68,68,0.15) 0%, transparent 70%); opacity: 0; transition: opacity 0.4s; z-index: 1;}
+        .door-option:hover .door-glow { opacity: 1; }
+
+        @media (max-width: 640px) {
+            .sentence-current { font-size: 1.75rem; }
+            .sentence-prev, .sentence-next { font-size: 1rem; }
+            #controls-overlay { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body class="theme-default relative">
+
+    <!-- Spectral Vision Background Containers -->
+    <div id="vision-bg" class="absolute inset-0 bg-cover bg-center transition-all duration-[2000ms] ease-in-out opacity-0 pointer-events-none mix-blend-color-dodge z-0"></div>
+    <div id="vision-dim" class="absolute inset-0 bg-black/70 pointer-events-none z-0 transition-opacity duration-1000 opacity-0"></div>
+
+    <!-- Controls Header -->
+    <div id="controls-overlay" class="absolute top-0 left-0 w-full p-4 flex flex-wrap sm:flex-nowrap justify-between items-center gap-4 text-gray-300">
+        <div class="flex items-center gap-3 flex-wrap">
+            <h1 class="text-xl font-bold tracking-widest uppercase">The 13th Door</h1>
+            <div class="w-px h-6 bg-gray-600 hidden sm:block"></div>
+            <label class="cursor-pointer bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md text-sm transition border border-gray-600">
+                <span>Upload .txt</span>
+                <input type="file" id="file-upload" accept=".txt" class="hidden">
+            </label>
+            <!-- Gemini AI Buttons -->
+            <button id="btn-inject" class="bg-purple-900/50 border border-purple-500 hover:bg-purple-800 text-purple-200 px-3 py-1.5 rounded-md text-sm transition font-bold">
+                ✨ Inject Chaos
+            </button>
+            <button id="btn-decode" class="bg-cyan-900/50 border border-cyan-500 hover:bg-cyan-800 text-cyan-200 px-3 py-1.5 rounded-md text-sm transition font-bold">
+                ✨ Decode Lore
+            </button>
+            <button id="btn-corrupt" class="bg-red-900/50 border border-red-500 hover:bg-red-800 text-red-200 px-3 py-1.5 rounded-md text-sm transition font-bold">
+                ✨ Corrupt Signal
+            </button>
+            <button id="btn-void" class="bg-orange-900/50 border border-orange-500 hover:bg-orange-800 text-orange-200 px-3 py-1.5 rounded-md text-sm transition font-bold">
+                ✨ Ask the Void
+            </button>
+            <button id="btn-vision" class="bg-blue-900/50 border border-blue-500 hover:bg-blue-800 text-blue-200 px-3 py-1.5 rounded-md text-sm transition font-bold">
+                ✨ Manifest Vision
+            </button>
+            <button id="btn-esoteric-echo" class="bg-emerald-900/50 border border-emerald-500 hover:bg-emerald-800 text-emerald-200 px-3 py-1.5 rounded-md text-sm transition font-bold">
+                ✨ Esoteric Echo
+            </button>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <select id="voice-select" class="bg-gray-800 border border-gray-600 text-sm rounded-md px-2 py-2 max-w-[150px] outline-none text-gray-300">
+                <option value="">Loading Voices...</option>
+            </select>
+            <button id="btn-play" class="bg-white text-black hover:bg-gray-200 px-6 py-2 rounded-md font-bold transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
+                Play
+            </button>
+            <button id="btn-pause" class="bg-gray-800 border border-gray-600 hover:bg-gray-700 px-4 py-2 rounded-md font-bold transition hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"/></svg>
+                Pause
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Visual Stage -->
+    <div id="text-container">
+        <div id="text-prev" class="sentence sentence-prev"></div>
+        <div id="text-current" class="sentence sentence-current">Please press play to begin the experience.</div>
+        <div id="text-next" class="sentence sentence-next"></div>
+    </div>
+
+    <!-- Haptic/Visual Flash Overlay -->
+    <div id="flash-overlay" class="fixed inset-0 pointer-events-none opacity-0 transition-opacity duration-100 z-0"></div>
+
+    <!-- Gemini Lore Analysis Overlay -->
+    <div id="lore-overlay" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-2xl p-8 rounded-lg hidden flex-col gap-4">
+        <div class="flex justify-between items-center border-b border-cyan-800 pb-2">
+            <h2 class="text-cyan-400 font-bold tracking-widest uppercase">System Analysis</h2>
+            <button id="btn-close-lore" class="text-gray-400 hover:text-white">✕</button>
+        </div>
+        <div id="lore-content" class="text-cyan-100 leading-relaxed text-sm sm:text-base">
+            <!-- Content injected here -->
+        </div>
+    </div>
+
+    <!-- Ask the Void Overlay -->
+    <div id="void-overlay" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-2xl p-8 rounded-lg hidden flex-col gap-4">
+        <div class="flex justify-between items-center border-b border-red-800 pb-2">
+            <h2 class="text-red-400 font-bold tracking-widest uppercase">Direct Commune</h2>
+            <button id="btn-close-void" class="text-gray-400 hover:text-white">✕</button>
+        </div>
+        <div class="flex flex-col gap-3">
+            <input type="text" id="void-input" placeholder="Type your question to the entity..." class="w-full bg-black/50 border border-red-900 text-red-100 p-3 outline-none focus:border-red-500 transition rounded" autocomplete="off">
+            <button id="btn-submit-void" class="bg-red-900 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Transmit Question</button>
+        </div>
+        <div id="void-response" class="text-red-300 leading-relaxed text-sm sm:text-base hidden mt-4 border-t border-red-900/50 pt-4">
+            <!-- Content injected here -->
+        </div>
+    </div>
+
+    <!-- Forking Path Overlay -->
+    <div id="fork-overlay" class="fixed inset-0 bg-black/95 z-[200] hidden flex-col justify-center items-center backdrop-blur-md">
+        <h2 id="fork-status" class="text-3xl font-bold text-red-500 mb-12 tracking-widest uppercase glitch-effect">The Path Forks...</h2>
+        <div id="doors-container" class="flex gap-8 flex-wrap justify-center max-w-5xl opacity-0 transition-opacity duration-1000">
+            <!-- doors injected here -->
+        </div>
+    </div>
+
+    <script>
+        // --- GEMINI API CONFIGURATION ---
+        const apiKey = ""; // API key is injected by the environment at runtime
+        
+        async function fetchGeminiWithRetry(prompt, systemInstruction, retries = 5, customConfig = null) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            if (customConfig) {
+                payload.generationConfig = customConfig;
+            }
+
+            const delays = [1000, 2000, 4000, 8000, 16000];
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                } catch (error) {
+                    if (i === retries - 1) {
+                        console.error("Gemini API failed after all retries:", error);
+                        return null;
+                    }
+                    await new Promise(res => setTimeout(res, delays[i]));
+                }
+            }
+        }
+
+        // --- GEMINI TEXT TO SPEECH ---
+        async function fetchGeminiSpeech(text, retries = 5) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: `Say in a slow, deep, dark, whispering tone: ${text}` }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: {
+                                voiceName: "Fenrir" // Haunting, perfect for dark themes
+                            }
+                        }
+                    }
+                }
+            };
+
+            const delays = [1000, 2000, 4000, 8000, 16000];
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    const audioBase64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                    return audioBase64 || null;
+                } catch (error) {
+                    if (i === retries - 1) {
+                        console.error("Gemini TTS API failed after all retries:", error);
+                        return null;
+                    }
+                    await new Promise(res => setTimeout(res, delays[i]));
+                }
+            }
+        }
+
+        // Convert PCM-16 raw speech data to WAV file object for playback
+        function pcmToWav(base64String, sampleRate = 24000) {
+            const buffer = Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
+            const wavHeader = new ArrayBuffer(44);
+            const view = new DataView(wavHeader);
+            
+            function writeString(v, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    v.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + buffer.length, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // Linear PCM
+            view.setUint16(22, 1, true); // Mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true); // Mono 16-bit
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, buffer.length, true);
+
+            const blob = new Blob([wavHeader, buffer], { type: 'audio/wav' });
+            return URL.createObjectURL(blob);
+        }
+
+        // --- GEMINI IMAGEN-4 INTEGRATION ---
+        async function fetchGeminiImage(promptText, retries = 5) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+            const payload = {
+                instances: [
+                    { prompt: promptText }
+                ],
+                parameters: {
+                    sampleCount: 1,
+                    aspectRatio: "16:9"
+                }
+            };
+
+            const delays = [1000, 2000, 4000, 8000, 16000];
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.predictions?.[0]?.bytesBase64Encoded || null;
+                } catch (error) {
+                    if (i === retries - 1) {
+                        console.error("Imagen API failed after all retries:", error);
+                        return null;
+                    }
+                    await new Promise(res => setTimeout(res, delays[i]));
+                }
+            }
+        }
+
+        // --- TEXT DATA & ENGINE ---
+        const demoText = `The 13th Door. Book 2.
+Ancient Myths. 
+1. The Myth of the 13th Key. France, 13th century.
+Beneath the catacombs under Paris, there are said to be twelve known entrances to the underworld. The thirteenth is not an entrance. It is an exit.
+Legend says that in 1277, a Cathar heretic named Brother Anselm discovered a black door deep within the ossuaries. When he opened it, he did not descend. He emerged.
+He returned to the surface changed. Speaking languages he had never learned, remembering the lives of people who had died centuries before his birth, and repeating the same sentence over and over: "She is not below. She has always been everywhere. We are the ones who separated ourselves."
+
+2. Greek Myth. The Door That Was Always Open.
+Dimitris's grandmother told him that in ancient Eleusis there existed a secret sect that did not worship Demeter, but rather: "The One Who Waits Between."
+They believed the 13th Door was not the final door, but the first. The door through which humanity left unity and entered separation.
+Their writings claimed: "We did not fall from heaven. We fled from the womb."
+
+3. Irish Myth. The Banshee Who Does Not Weep.
+In certain old Irish families there is a legend about a being that is not truly a banshee. They call her Anam Cara na gCnamh. Soul Friend of Bones.
+She does not bring death. She brings remembrance. When she appears to someone, she does not cry for them. She reminds them that somewhere else, in another layer of reality, they are already stationary.
+
+The face on the screen, half-melted into digital noise, stops fighting the desynchronization. The left eye, the left ear, the entire left hemisphere of perception gives over to the raw signal. 
+The first city has stopped screaming. 
+The colossal doors have closed, but they did not close in time. You cannot delete the presence. You cannot put the raw signal back into the box. 
+Once the heart hits 120 BPM and the filter drops, you become the bridge. You are the architect who realized the walls were made of paper. The system did not lose control. It gave it up. 
+Epilogue, awake. 
+There is no lag left. There is no echo. There is no delay. The storm is gone, and the sky is completely, terrifyingly clean. The high-frequency peak in the ear fades into the absolute silence of perfect synchronization. 
+You look at the screen. The images look back. Somewhere in the unfinished dark beyond the dream, the ancient thing that noticed the noise has arrived. It does not attack. It simply observes the tiny, glowing nodes of consciousness that have finally stopped pretending to be asleep. 
+The final line writes itself, printing across the pulse, the screen, and the ringing silence of the room. It found us awake.
+
+7 Down, Ivy Chokes.
+No Sound.
+Underground Underground.
+Mister Minter.`;
+
+        function cleanText(text) {
+            return text
+                .replace(/Mistr Mintr/gi, 'Mister Minter')
+                .replace(/\bqny\b/gi, 'any')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/([.!?])\s*(?=[A-Z])/g, "$1|") 
+                .trim();
+        }
+
+        let sentences = cleanText(demoText).split('|').map(s => s.trim()).filter(s => s.length > 0);
+        let currentIndex = 0;
+
+        // --- GEMINI FEATURES ---
+
+        const btnInject = document.getElementById('btn-inject');
+        const btnDecode = document.getElementById('btn-decode');
+        const btnCorrupt = document.getElementById('btn-corrupt');
+        const btnVoid = document.getElementById('btn-void');
+        const btnVision = document.getElementById('btn-vision');
+        const btnEsotericEcho = document.getElementById('btn-esoteric-echo');
+        
+        const loreOverlay = document.getElementById('lore-overlay');
+        const loreContent = document.getElementById('lore-content');
+        const btnCloseLore = document.getElementById('btn-close-lore');
+
+        const voidOverlay = document.getElementById('void-overlay');
+        const voidInput = document.getElementById('void-input');
+        const btnSubmitVoid = document.getElementById('btn-submit-void');
+        const voidResponse = document.getElementById('void-response');
+        const btnCloseVoid = document.getElementById('btn-close-void');
+
+        let esotericAudio = null;
+
+        // --- NEW: Manifest Vision (Imagen 4.0 Art Manifestation) ---
+        btnVision.addEventListener('click', async () => {
+            const currentSentence = sentences[currentIndex];
+            if (!currentSentence) return;
+
+            const wasPlaying = isPlaying;
+            if (wasPlaying) pausePlayback();
+
+            const originalText = btnVision.innerText;
+            btnVision.innerText = "✨ Formulating Concept...";
+            btnVision.classList.add('ai-loading', 'pointer-events-none');
+
+            // 1. Ask Gemini Flash to write a perfectly tailored art prompt
+            const promptSystem = "You are a master concept artist specializing in cosmic, digital-glitch, dark-surrealism, and eerie mythological horror. Generate a brief, punchy, atmospheric, and visually arresting image generation prompt (max 45 words) based on the sentence provided. Only write the prompt itself, nothing else.";
+            const generatedPrompt = await fetchGeminiWithRetry(`Convert this text into a visual oil painting concept art prompt: "${currentSentence}"`, promptSystem);
+
+            if (!generatedPrompt) {
+                alert("Vision generation concept failed. Signal faded.");
+                btnVision.innerText = originalText;
+                btnVision.classList.remove('ai-loading', 'pointer-events-none');
+                if (wasPlaying) startPlayback();
+                return;
+            }
+
+            btnVision.innerText = "✨ Painting Reality...";
+
+            // 2. Call Imagen with the highly detailed concept art prompt
+            const base64Image = await fetchGeminiImage(`${generatedPrompt}, detailed oil painting, highly atmospheric, cinematic lighting, masterpiece, digital glitch interference`);
+
+            btnVision.innerText = originalText;
+            btnVision.classList.remove('ai-loading', 'pointer-events-none');
+
+            if (base64Image) {
+                const imgContainer = document.getElementById('vision-bg');
+                const dimOverlay = document.getElementById('vision-dim');
+
+                imgContainer.style.backgroundImage = `url(data:image/png;base64,${base64Image})`;
+                imgContainer.classList.remove('opacity-0');
+                imgContainer.classList.add('opacity-[0.35]'); // Beautiful low-opacity aesthetic overlay
+                dimOverlay.classList.remove('opacity-0');
+                dimOverlay.classList.add('opacity-100');
+
+                triggerHaptic([50, 100, 50]);
+                if (wasPlaying) startPlayback();
+            } else {
+                alert("The canvas was left unpainted. The void resisted.");
+                if (wasPlaying) startPlayback();
+            }
+        });
+
+        // --- NEW: Esoteric Echo (Gemini TTS Narrator Option) ---
+        btnEsotericEcho.addEventListener('click', async () => {
+            const currentSentence = sentences[currentIndex];
+            if (!currentSentence) return;
+
+            const wasPlaying = isPlaying;
+            if (wasPlaying) pausePlayback();
+
+            const originalText = btnEsotericEcho.innerText;
+            btnEsotericEcho.innerText = "✨ Imbuing Spirit...";
+            btnEsotericEcho.classList.add('ai-loading', 'pointer-events-none');
+
+            // Generate raw audio from Gemini Flash TTS
+            const base64Audio = await fetchGeminiSpeech(currentSentence);
+
+            btnEsotericEcho.innerText = originalText;
+            btnEsotericEcho.classList.remove('ai-loading', 'pointer-events-none');
+
+            if (base64Audio) {
+                // Play raw binary wave file
+                const wavUrl = pcmToWav(base64Audio);
+                if (esotericAudio) esotericAudio.pause();
+
+                esotericAudio = new Audio(wavUrl);
+                esotericAudio.play();
+
+                // Simple custom playback visual pulses
+                const flashOverlay = document.getElementById('flash-overlay');
+                flashOverlay.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+                flashOverlay.classList.replace('opacity-0', 'opacity-100');
+                setTimeout(() => flashOverlay.classList.replace('opacity-100', 'opacity-0'), 2000);
+            } else {
+                alert("Esoteric voice echoes back empty. Standard synthesizers will run instead.");
+                if (wasPlaying) startPlayback();
+            }
+        });
+
+        btnInject.addEventListener('click', async () => {
+            const wasPlaying = isPlaying;
+            if (wasPlaying) pausePlayback();
+
+            const originalText = btnInject.innerText;
+            btnInject.innerText = "✨ Communing...";
+            btnInject.classList.add('ai-loading', 'pointer-events-none');
+
+            const startIdx = Math.max(0, currentIndex - 5);
+            const context = sentences.slice(startIdx, currentIndex + 1).join(" ");
+            
+            const systemPrompt = "You are a dark, esoteric AI writing the continuation of a glitch-horror, mythological story. The tone is deeply atmospheric, slightly clinical, and terrifying. Write the next 2 to 3 sentences that follow the provided context naturally. Do not include any meta-text. Keep it brief and haunting.";
+            const userPrompt = `Context:\n"${context}"\n\nWrite the next 3 sentences.`;
+
+            const result = await fetchGeminiWithRetry(userPrompt, systemPrompt);
+
+            btnInject.innerText = originalText;
+            btnInject.classList.remove('ai-loading', 'pointer-events-none');
+
+            if (result) {
+                const newSentences = cleanText(result).split('|').map(s => s.trim()).filter(s => s.length > 0);
+                sentences.splice(currentIndex + 1, 0, ...newSentences);
+                
+                const flashOverlay = document.getElementById('flash-overlay');
+                flashOverlay.style.backgroundColor = 'rgba(168, 85, 247, 0.4)';
+                flashOverlay.classList.replace('opacity-0', 'opacity-100');
+                setTimeout(() => flashOverlay.classList.replace('opacity-100', 'opacity-0'), 500);
+
+                updateUI(currentIndex);
+                if (wasPlaying) startPlayback();
+            } else {
+                alert("The signal was lost. Could not generate text.");
+                if (wasPlaying) startPlayback();
+            }
+        });
+
+        btnDecode.addEventListener('click', async () => {
+            if (sentences.length === 0) return;
+            
+            const wasPlaying = isPlaying;
+            if (wasPlaying) pausePlayback();
+
+            const currentSentence = sentences[currentIndex];
+            
+            loreOverlay.classList.remove('hidden');
+            loreOverlay.classList.add('flex');
+            loreContent.innerHTML = `<span class="ai-loading block text-center text-cyan-500 my-8">DECRYPTING SIGNAL...</span>`;
+
+            const systemPrompt = "You are an automated, clinical system analyzing a piece of strange, esoteric text. Analyze the mythological, psychological, or existential implications of the provided sentence. Provide a 2-sentence breakdown in a highly analytical, slightly detached, and unnerving tone. Structure it as a system readout. Do not repeat the prompt.";
+            const userPrompt = `Analyze this text: "${currentSentence}"`;
+
+            const result = await fetchGeminiWithRetry(userPrompt, systemPrompt);
+
+            if (result) {
+                const formattedResult = result.split('\n').map(line => `<p class="mb-2">> ${line}</p>`).join('');
+                loreContent.innerHTML = `
+                    <div class="mb-4 text-xs text-cyan-600 border-b border-cyan-800/50 pb-2">
+                        TARGET STRING: "${currentSentence}"
+                    </div>
+                    ${formattedResult}
+                `;
+            } else {
+                loreContent.innerHTML = `<p class="text-red-500">> ERROR. SIGNAL LOST. ANALYSIS FAILED.</p>`;
+            }
+        });
+
+        btnCloseLore.addEventListener('click', () => {
+            loreOverlay.classList.add('hidden');
+            loreOverlay.classList.remove('flex');
+        });
+
+        btnCorrupt.addEventListener('click', async () => {
+            const wasPlaying = isPlaying;
+            if (wasPlaying) pausePlayback();
+
+            const originalText = btnCorrupt.innerText;
+            btnCorrupt.innerText = "✨ Corrupting...";
+            btnCorrupt.classList.add('ai-loading', 'pointer-events-none');
+
+            const endIndex = Math.min(sentences.length, currentIndex + 4);
+            const contextToCorrupt = sentences.slice(currentIndex + 1, endIndex).join(" ");
+            
+            if (!contextToCorrupt) {
+                alert("No upcoming signal to corrupt.");
+                btnCorrupt.innerText = originalText;
+                btnCorrupt.classList.remove('ai-loading', 'pointer-events-none');
+                return;
+            }
+
+            const systemPrompt = "You are a terrifying, anomalous entity invading a data stream. Rewrite the provided text to be deeply unsettling, glitchy, and nightmarish. Introduce cosmic horror, sensory distortions, and cryptic warnings. Keep it roughly the same length as the original. Only output the corrupted text, nothing else.";
+            const userPrompt = `Corrupt this text: "${contextToCorrupt}"`;
+
+            const result = await fetchGeminiWithRetry(userPrompt, systemPrompt);
+
+            btnCorrupt.innerText = originalText;
+            btnCorrupt.classList.remove('ai-loading', 'pointer-events-none');
+
+            if (result) {
+                const corruptedSentences = cleanText(result).split('|').map(s => s.trim()).filter(s => s.length > 0);
+                sentences.splice(currentIndex + 1, endIndex - (currentIndex + 1), ...corruptedSentences);
+                
+                const flashOverlay = document.getElementById('flash-overlay');
+                flashOverlay.style.backgroundColor = 'rgba(255, 0, 0, 0.6)';
+                flashOverlay.classList.replace('opacity-0', 'opacity-100');
+                triggerHaptic([100, 50, 200, 50, 100]);
+                setTimeout(() => flashOverlay.classList.replace('opacity-100', 'opacity-0'), 300);
+                
+                updateUI(currentIndex);
+                if (wasPlaying) startPlayback();
+            } else {
+                alert("The signal resisted corruption.");
+                if (wasPlaying) startPlayback();
+            }
+        });
+
+        btnVoid.addEventListener('click', () => {
+            if (isPlaying) pausePlayback();
+            voidOverlay.classList.remove('hidden');
+            voidOverlay.classList.add('flex');
+            voidInput.value = '';
+            voidResponse.classList.add('hidden');
+            voidInput.focus();
+        });
+
+        btnCloseVoid.addEventListener('click', () => {
+            voidOverlay.classList.add('hidden');
+            voidOverlay.classList.remove('flex');
+        });
+
+        btnSubmitVoid.addEventListener('click', async () => {
+            const question = voidInput.value.trim();
+            if (!question) return;
+
+            const currentSentence = sentences[currentIndex] || "There is only silence.";
+            
+            voidResponse.classList.remove('hidden');
+            voidResponse.innerHTML = `<span class="ai-loading block text-center text-red-500 my-4">WAITING FOR A RESPONSE...</span>`;
+            btnSubmitVoid.disabled = true;
+
+            const systemPrompt = "You are the ancient, terrifying entity waiting beyond the 13th Door. The user is asking you a question based on their current location in the text. Respond directly to them in 1 to 2 sentences. Be cryptic, omniscient, terrifying, and deeply unsettling. Speak as if you are right behind them.";
+            const userPrompt = `Context: "${currentSentence}"\n\nUser asks: "${question}"`;
+
+            const result = await fetchGeminiWithRetry(userPrompt, systemPrompt);
+
+            btnSubmitVoid.disabled = false;
+
+            if (result) {
+                voidResponse.innerHTML = `<p class="italic">"${result}"</p>`;
+                
+                // HIGH-QUALITY REMASTERED VOID COMMUNE SPEECH (GEMINI TTS API)
+                const base64Audio = await fetchGeminiSpeech(result);
+                if (base64Audio) {
+                    const wavUrl = pcmToWav(base64Audio);
+                    if (esotericAudio) esotericAudio.pause();
+                    esotericAudio = new Audio(wavUrl);
+                    esotericAudio.play();
+                } else {
+                    // Fallback to local synth
+                    const voidSpeech = new SpeechSynthesisUtterance(result);
+                    voidSpeech.pitch = 0.1;
+                    voidSpeech.rate = 0.75;
+                    let voices = synth.getVoices();
+                    voidSpeech.voice = voices.find(v => v.name.includes('UK English Male')) || voices[0];
+                    synth.speak(voidSpeech);
+                }
+
+            } else {
+                voidResponse.innerHTML = `<p class="text-gray-500">> NO RESPONSE. THE VOID IS EMPTY.</p>`;
+            }
+        });
+
+        voidInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                btnSubmitVoid.click();
+            }
+        });
+
+        // --- AUDIO ENGINE ---
+        
+        let synth = window.speechSynthesis;
+        let utterance = null;
+        let isPlaying = false;
+        let voiceSelect = document.getElementById('voice-select');
+
+        function populateVoices() {
+            let voices = synth.getVoices();
+            voiceSelect.innerHTML = '';
+            
+            let enVoices = voices.filter(v => v.lang.startsWith('en'));
+            if(enVoices.length === 0) enVoices = voices;
+
+            enVoices.forEach((voice, i) => {
+                let option = document.createElement('option');
+                option.value = voice.name;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                if (voice.name.includes('Google UK English Male') || voice.name.includes('Daniel')) {
+                    option.selected = true; 
+                }
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        populateVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoices;
+        }
+
+        function speakSentence(index) {
+            if (index >= sentences.length) {
+                stopPlayback();
+                document.getElementById('text-current').innerText = "The narrative pauses...";
+                triggerForkingPath();
+                return;
+            }
+
+            let text = sentences[index];
+            updateUI(index);
+            triggerEffects(text);
+
+            utterance = new SpeechSynthesisUtterance(text);
+            
+            let selectedVoice = voiceSelect.options[voiceSelect.selectedIndex].value;
+            let voices = synth.getVoices();
+            utterance.voice = voices.find(v => v.name === selectedVoice);
+            
+            utterance.rate = 0.9;
+            utterance.pitch = 0.8; 
+
+            utterance.onend = function() {
+                if (isPlaying) {
+                    currentIndex++;
+                    setTimeout(() => speakSentence(currentIndex), 400); 
+                }
+            };
+
+            utterance.onerror = function(e) {
+                console.error("Speech error", e);
+                isPlaying = false;
+                toggleButtons();
+            };
+
+            synth.speak(utterance);
+        }
+
+        // --- NEW: THE FORKING PATH ---
+        async function triggerForkingPath() {
+            const forkOverlay = document.getElementById('fork-overlay');
+            const forkStatus = document.getElementById('fork-status');
+            const doorsContainer = document.getElementById('doors-container');
+
+            // Show UI
+            forkOverlay.classList.remove('hidden');
+            forkOverlay.classList.add('flex');
+            doorsContainer.classList.remove('opacity-100');
+            doorsContainer.classList.add('opacity-0');
+            doorsContainer.innerHTML = '';
+            forkStatus.innerText = "THE VOID IS BRANCHING...";
+            forkStatus.classList.add('ai-loading');
+
+            // Get context for Gemini
+            const context = sentences.slice(Math.max(0, sentences.length - 10)).join(" ");
+
+            const systemPrompt = "You are the architect of a dark, cosmic glitch-horror narrative. The story has paused. Generate exactly two distinct, terrifying paths for the story to continue. Return the result strictly as a JSON array of objects.";
+            const userPrompt = `Story so far: "${context}"\n\nGenerate two distinct paths forward.`;
+
+            // Enforce Structured Output JSON schema
+            const jsonSchemaConfig = {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            "doorTitle": { "type": "STRING", "description": "Cryptic 2-4 word title for the choice." },
+                            "continuationText": { "type": "STRING", "description": "3-4 sentences continuing the story down this path." }
+                        },
+                        required: ["doorTitle", "continuationText"]
+                    }
+                }
+            };
+
+            const resultJson = await fetchGeminiWithRetry(userPrompt, systemPrompt, 5, jsonSchemaConfig);
+
+            forkStatus.classList.remove('ai-loading');
+
+            if (resultJson) {
+                try {
+                    const paths = JSON.parse(resultJson);
+                    forkStatus.innerText = "CHOOSE YOUR DOOR";
+
+                    paths.forEach((path) => {
+                        const door = document.createElement('div');
+                        door.className = 'door-option rounded-lg border border-slate-700 shadow-2xl';
+                        door.innerHTML = `
+                            <div class="door-glow"></div>
+                            <div class="door-title">${path.doorTitle}</div>
+                            <div class="door-preview">"${path.continuationText}"</div>
+                        `;
+                        door.addEventListener('click', () => {
+                            selectPath(path.continuationText);
+                        });
+                        doorsContainer.appendChild(door);
+                    });
+
+                    doorsContainer.classList.remove('opacity-0');
+                    doorsContainer.classList.add('opacity-100');
+
+                } catch (e) {
+                    console.error("Failed to parse JSON for forking path", e);
+                    forkStatus.innerText = "THE PATH COLLAPSED. INJECT CHAOS.";
+                    setTimeout(() => { forkOverlay.classList.add('hidden'); forkOverlay.classList.remove('flex'); }, 3000);
+                }
+            } else {
+                forkStatus.innerText = "THE SIGNAL DIED.";
+                setTimeout(() => { forkOverlay.classList.add('hidden'); forkOverlay.classList.remove('flex'); }, 3000);
+            }
+        }
+
+        function selectPath(text) {
+            const forkOverlay = document.getElementById('fork-overlay');
+            forkOverlay.classList.add('hidden');
+            forkOverlay.classList.remove('flex');
+            triggerHaptic([50, 100, 200]);
+
+            const newSentences = cleanText(text).split('|').map(s => s.trim()).filter(s => s.length > 0);
+            sentences.push(...newSentences);
+
+            // Resume playback from the newly added sentences
+            startPlayback();
+        }
+
+        // --- VISUAL & HAPTIC EFFECTS ENGINE ---
+
+        function updateUI(index) {
+            document.getElementById('text-prev').innerText = index > 0 ? sentences[index - 1] : "";
+            document.getElementById('text-current').innerText = sentences[index];
+            document.getElementById('text-next').innerText = index < sentences.length - 1 ? sentences[index + 1] : "";
+        }
+
+        function triggerEffects(text) {
+            const body = document.body;
+            const currentTextEl = document.getElementById('text-current');
+            const flashOverlay = document.getElementById('flash-overlay');
+            const lowerText = text.toLowerCase();
+
+            body.className = '';
+            currentTextEl.className = 'sentence sentence-current';
+            flashOverlay.className = 'fixed inset-0 pointer-events-none opacity-0 transition-opacity duration-100 z-0';
+
+            triggerHaptic(30);
+
+            if (lowerText.includes('noise') || lowerText.includes('screaming') || lowerText.includes('digital') || lowerText.includes('120 bpm')) {
+                body.classList.add('theme-digital');
+                currentTextEl.classList.add('glitch-effect');
+                body.classList.add('screen-shake'); 
+                triggerHaptic([100, 50, 100, 50, 150]); 
+                
+                flashOverlay.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                flashOverlay.classList.replace('opacity-0', 'opacity-100');
+                setTimeout(() => flashOverlay.classList.replace('opacity-100', 'opacity-0'), 200);
+
+            } else if (lowerText.includes('awake') || lowerText.includes('silence') || lowerText.includes('clean') || lowerText.includes('white')) {
+                body.classList.add('theme-awake');
+                currentTextEl.style.transition = "all 2s ease";
+                triggerHaptic([200]); 
+                
+                flashOverlay.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+                flashOverlay.classList.replace('opacity-0', 'opacity-100');
+                setTimeout(() => flashOverlay.classList.replace('opacity-100', 'opacity-0'), 1500);
+
+            } else if (lowerText.includes('door') || lowerText.includes('underworld') || lowerText.includes('catacombs') || lowerText.includes('dark')) {
+                body.classList.add('theme-underworld');
+                currentTextEl.classList.add('glow-effect');
+                triggerHaptic([50, 100, 50]); 
+                
+            } else if (lowerText.includes('myth') || lowerText.includes('ancient') || lowerText.includes('legend')) {
+                body.classList.add('theme-myth');
+            } else {
+                body.classList.add('theme-default');
+            }
+        }
+
+        function triggerHaptic(pattern) {
+            if (navigator.vibrate) {
+                try {
+                    navigator.vibrate(pattern);
+                } catch(e) {}
+            }
+        }
+
+        // --- CONTROLS LOGIC ---
+
+        const btnPlay = document.getElementById('btn-play');
+        const btnPause = document.getElementById('btn-pause');
+        const fileUpload = document.getElementById('file-upload');
+
+        function toggleButtons() {
+            if (isPlaying) {
+                btnPlay.classList.add('hidden');
+                btnPause.classList.remove('hidden');
+                document.body.classList.add('playing');
+            } else {
+                btnPlay.classList.remove('hidden');
+                btnPause.classList.add('hidden');
+                document.body.classList.remove('playing');
+            }
+        }
+
+        function startPlayback() {
+            if (synth.paused) {
+                synth.resume();
+                isPlaying = true;
+            } else {
+                isPlaying = true;
+                if (currentIndex >= sentences.length) currentIndex = 0;
+                speakSentence(currentIndex);
+            }
+            toggleButtons();
+        }
+
+        function pausePlayback() {
+            synth.pause();
+            isPlaying = false;
+            toggleButtons();
+        }
+
+        function stopPlayback() {
+            synth.cancel();
+            isPlaying = false;
+            toggleButtons();
+            document.body.className = 'theme-default';
+        }
+
+        btnPlay.addEventListener('click', startPlayback);
+        btnPause.addEventListener('click', pausePlayback);
+
+        fileUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            stopPlayback();
+            document.getElementById('text-current').innerText = "Processing text...";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rawText = e.target.result;
+                sentences = cleanText(rawText).split('|').map(s => s.trim()).filter(s => s.length > 0);
+                currentIndex = 0;
+                updateUI(0);
+                document.getElementById('text-current').innerText = "File loaded. Press play.";
+            };
+            reader.readAsText(file);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' && e.target === document.body) {
+                e.preventDefault();
+                isPlaying ? pausePlayback() : startPlayback();
+            }
+        });
+
+        updateUI(0);
+
+    </script>
+</body>
+</html>
